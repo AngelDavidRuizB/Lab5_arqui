@@ -1,0 +1,50 @@
+# Laboratorio de segmentación de red — versión PLANA (SIN segmentar)
+# Todos los contenedores comparten una sola red: así NO se debe hacer.
+name: lab-plano
+
+services:
+  web:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    ports: ["8080:80", "8443:443"]
+    networks: { plana: { ipv4_address: 172.31.0.10 } }
+    depends_on: [app]
+
+  app:
+    build: ./app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://tienda:Tienda2026@db:5432/tienda
+    networks: { plana: { ipv4_address: 172.31.0.20 } }
+    depends_on: [db]
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tienda
+      POSTGRES_USER: tienda
+      POSTGRES_PASSWORD: Tienda2026
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: { plana: { ipv4_address: 172.31.0.30 } }
+
+  cliente:
+    build: ./atacante
+    command: sleep infinity
+    networks: { plana: { ipv4_address: 172.31.0.40 } }
+
+  atacante:
+    build: ./atacante
+    command: sleep infinity
+    networks: { plana: { ipv4_address: 172.31.0.50 } }
+
+networks:
+  plana:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-plana
+    ipam:
+      config: [{ subnet: 172.31.0.0/24 }]

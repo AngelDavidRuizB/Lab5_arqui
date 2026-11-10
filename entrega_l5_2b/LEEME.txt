@@ -1,0 +1,7 @@
+Laboratorio 5 - Seguridad · Equipo 2b · Patrón de segmentación de red
+
+l5_2b.pdf               Entregable para subir a MiCampus (exportado desde l5_2b.md)
+l5_2b.md                Fuente del entregable en Markdown (incluye el diagrama Mermaid)
+vista-despliegue.mmd    Código Mermaid de la vista de despliegue
+vista-despliegue.png    Vista de despliegue generada desde el .mmd (la que aparece en el PDF)
+lab-segmentacion/       Archivos para ejecutar el laboratorio (ver sección 5 del PDF)

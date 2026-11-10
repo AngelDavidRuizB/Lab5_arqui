@@ -1,0 +1,32 @@
+%%{init: {"themeVariables": {"fontSize": "17px"}, "flowchart": {"wrappingWidth": 380, "nodeSpacing": 30, "rankSpacing": 45}}}%%
+flowchart TB
+    host["«equipo anfitrión» Navegador<br/>localhost:8080 · localhost:8443"]
+
+    subgraph DMZ["Red dmz · 172.30.1.0/24 · bridge br-dmz · zona expuesta"]
+        cliente["«contenedor» cliente<br/>usuario legítimo · 172.30.1.20"]
+        web["«proxy inverso» web · Nginx<br/>dmz 172.30.1.10 · backend 172.30.2.10<br/>:80 HTTP · :443 HTTPS<br/>(aquí termina el TLS)"]
+        atacante["«contenedor» atacante<br/>equipo comprometido · 172.30.1.30"]
+    end
+
+    subgraph BACKEND["Red backend · 172.30.2.0/24 · bridge br-backend · internal: true"]
+        app["«contenedor» app · Flask<br/>backend 172.30.2.20 · datos 172.30.3.20<br/>:5000 HTTP"]
+    end
+
+    subgraph DATOS["Red datos · 172.30.3.0/24 · bridge br-datos · internal: true"]
+        db[("«base de datos» db · PostgreSQL 16<br/>172.30.3.30 · :5432")]
+    end
+
+    sniffer["«contenedor» sniffer<br/>(red del anfitrión)<br/>captura en br-dmz,<br/>br-backend y br-datos"]
+
+    host -->|"puertos publicados 8080→80 · 8443→443"| web
+    cliente -->|"HTTP 80 / HTTPS 443"| web
+    web -->|"HTTP :5000 por la red backend"| app
+    app -->|"SQL :5432 por la red datos"| db
+    atacante -->|"solo alcanza el proxy"| web
+    atacante -. "bloqueado" .-x app
+    atacante -. "bloqueado" .-x db
+    sniffer -. "captura" .- DMZ
+
+    classDef bloqueado stroke:#dc2626,stroke-width:2px,color:#991b1b
+    class atacante bloqueado
+    linkStyle 5,6 stroke:#dc2626,stroke-width:1.5px
